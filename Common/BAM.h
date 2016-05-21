@@ -64,6 +64,7 @@ namespace BAM_Internal {
 	BAMIMPORT void BAM_SetScale(double s);
 	BAMIMPORT void BAM_menu_additional_data(double **ppRealityTVSize, int **ppRealityUnits, double **ppRealitySmooth_time, double **ppRealitySmooth_dist, double **ppCfgY, double **ppCfgZ, double **ppCfgAngle, double **ppTIAngle, double **ppRealitySmoothTime, double **ppRealitySmoothDist);
 
+	BAMIMPORT short BAM_GetAsyncButtonState(int btn);
 
 	/// <summary>
 	/// Helper class used for late binding of BAM functions

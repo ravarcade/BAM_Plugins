@@ -49,6 +49,7 @@ namespace BAM {
 	BAM_Function(SetScale);
 	BAM_Function(menu_additional_data);
 
+	BAM_Function(GetAsyncButtonState);
 };
 
 // functions called from BAM.dll - they must be implemented.

@@ -163,12 +163,12 @@ int ReadKeyboard(int key)
 {
 	int ret = 0;
 
-	key &= 0xff; // 256 keys
-	static SHORT old_states[256];
+	key &= 0x1ff; // 256 keys + 256 joy buttons
+	static SHORT old_states[512];
 	static bool once = true;
 	if (once)
 	{
-		for (unsigned int i = 0; i<256; ++i)
+		for (unsigned int i = 0; i<512; ++i)
 		{
 			old_states[i] = 0;
 		}
@@ -176,7 +176,8 @@ int ReadKeyboard(int key)
 		once = false;
 	}
 
-	SHORT state = GetAsyncKeyState(key);
+//	SHORT state = GetAsyncKeyState(key);
+	SHORT state = BAM::GetAsyncButtonState(key);
 	if (((state << 8) != 0) && ((old_states[key] << 8) == 0)) {
 		ret = 1;
 	}
