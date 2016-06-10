@@ -33,8 +33,42 @@ const char *YesNo_txt[] = {	"No", "Yes" };
 const char *ssao_modes[] = { "desktop", "arcade" };
 const char *ssao_res[] = { "low", "hi" };
 const char *ssao_type[] = { "off", "fastest / low", "fastest / hi", "fast / low", "fast / hi", "normal / low", "normal / hi", "slow / low", "slow / hi", "manual" };
+#define ARRAY_ENTRIES(array)	(sizeof(array)/sizeof(array[0]))
+
+struct ssao_preset {
+	double scale;
+	double range;
+	double blurScale;
+	double blurStrength;
+	int res;
+	double max;
+	int rings;
+} ssao_presets_desktop[] = {
+	30, 20.0, 1.5, 0.08, 0, 0.6, 1,
+	15, 20.0, 1.5, 0.08, 0, 0.6, 1,
+	30, 20.0, 1.5, 0.08, 0, 0.5, 1,
+	15, 20.0, 1.5, 0.08, 0, 0.6, 2,
+	30, 20.0, 1.5, 0.08, 0, 0.5, 2,
+	15, 20.0, 1.5, 0.08, 0, 0.6, 3,
+	30, 20.0, 1.5, 0.08, 0, 0.5, 3,
+	15, 20.0, 1.5, 0.08, 1, 0.6, 3,
+	30, 20.0, 1.5, 0.08, 1, 0.5, 3
+
+}, ssao_presets_arcade[] = {
+		30.0, 20.0, 1.5, 0.08, 0, 0.6, 1,
+		15.0, 20.0, 1.5, 0.08, 0, 0.6, 1,
+		30.0, 20.0, 1.5, 0.08, 0, 0.5, 1,
+		15.0, 20.0, 1.5, 0.08, 0, 0.6, 2,
+		30.0, 20.0, 1.5, 0.08, 0, 0.5, 2,
+		15.0, 20.0, 1.5, 0.08, 0, 0.6, 3,
+		30.0, 20.0, 1.5, 0.08, 0, 0.5, 3,
+		15.0, 20.0, 1.5, 0.08, 1, 0.6, 3,
+		30.0, 20.0, 1.5, 0.08, 1, 0.5, 3
+	};
 
 CPostFX PostFX;
+
+extern double Z_Near, Z_Far;
 
 void OnLoad()
 {
@@ -60,12 +94,13 @@ void OnLoad()
 	BAM::menu_add_param(PLUGIN_ID_NUM, "#-BScale:"DEFPW2"%.2f", &cfg.SSAO_BlurScale, 0.05, 1.0, "");
 	BAM::menu_add_param(PLUGIN_ID_NUM, "#-BStrength:"DEFPW2"%.2f", &cfg.SSAO_BlurStrength, 0.05, 1.0, "");
 
+	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Z_Near:"DEFPW2"%.2f", &Z_Near, 0.05, 1.0, "");
+	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Z_Far:"DEFPW2"%.2f", &Z_Far, 10.0, 100.0, "");
 	BAM::LoadCfg("PostFX", &cfg, sizeof(cfg));
 }
 
 void OnUnload()
-{
-
+{	
 }
 
 void OnPluginStart()
@@ -103,6 +138,29 @@ void OnSwapBuffers(HDC hDC)
 		hudCounter = 0;
 	}
 
-	if (cfg.Enabled || hudCounter)
+	if (cfg.Enabled || hudCounter) {
+		if (false) {
+			ssao_preset *p = cfg.SSAO_mode == 0 ? ssao_presets_desktop : ssao_presets_arcade;
+			if (cfg.SSAO_type < ARRAY_ENTRIES(ssao_type) - 1) {
+				cfg.SSAO_res = p[cfg.SSAO_type].res;
+				cfg.SSAO_scale = p[cfg.SSAO_type].scale;
+				cfg.SSAO_range = p[cfg.SSAO_type].range;
+				cfg.SSAO_BlurStrength = p[cfg.SSAO_type].blurStrength;
+				cfg.SSAO_BlurScale = p[cfg.SSAO_type].blurScale;
+				cfg.SSAO_MAX = p[cfg.SSAO_type].max;
+				cfg.SSAO_rings = p[cfg.SSAO_type].rings;
+			}
+		}
+
 		PostFX.Postprocess();
+	}
+}
+
+
+void BAM_hud(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	BAM::VhudDebug(fmt, ap);
+	va_end(ap);
 }

@@ -3,6 +3,7 @@
 
 uniform vec4 Local0;
 uniform vec4 Local1;
+uniform vec4 Local2;
 uniform sampler2DRect Texture0;
 uniform int rings;
 

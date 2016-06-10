@@ -45,8 +45,9 @@ extern Ccfg cfg;
 struct FB {
 	GLuint FBO;
 	GLuint tex;
+	GLuint depthTex;
 	GLint dim[2];
-	FB() : FBO(0), tex(0) {}
+	FB() : FBO(0), tex(0), depthTex(0) {}
 };
 
 class CPostFX
@@ -62,7 +63,9 @@ private:
 	void _VerifyRes();
 	void _CreateFBOs();
 	bool _CreateFBO(FB &fb, int width, int height);
+	bool _CreateFBOWithDepth(FB &fb, int width, int height);
 	void _CopyFBO(GLuint src, GLuint dst, GLint *viewport);
+	void _CopyFBOWithDepth(GLuint src, GLuint dst, GLint *viewport);
 	void _CreateShaders();
 	GLuint CPostFX::_CreateShaderProgram(const char *vertexSrc, const char *fragmentSrc);
 	void _DrawQuad(GLint *dstRect, GLint *dstSize, GLint *srcRect, GLint *srcSize, GLint locPostion, GLint locTexture);
@@ -98,19 +101,25 @@ private:
 	GLint m_P3_tex;
 	GLint m_P3_tex2;
 
-	GLuint m_SSAO_1;
-	GLint m_S1_Texture0;
-	GLint m_S1_Local0;
-	GLint m_S1_Local1;
-	GLint m_S1_rings;
+	struct {
+		GLuint Program;
+		GLint ScalePosition;
+		GLint ScaleTexture;
+		GLint pixelSize;
+		GLint aoRangeLevelAspect;
+		GLint gamma;
 
-	GLuint m_SSAO_1b;
-	GLint m_S1b_Texture0;
-	GLint m_S1b_Local0;
-	GLint m_S1b_Local1;
-	GLint m_S1b_rings;
-
+		GLint Texture0;
+		GLint Texture1;
+		GLint rings;
+	} m_SSAO[2];
+	
 	GLuint m_SSAO_2;
+	GLint m_S2_ScalePosition;
+	GLint m_S2_ScaleTexture;
+	GLint m_S2_ssao_max_blur_amount;
+	GLint m_S2_tex;
+	GLint m_S2_tex2;
 
 public:
 	CPostFX();
