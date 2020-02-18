@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.779
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenVR", "OpenVR\OpenVR.vcxproj", "{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}"
 EndProject
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "FPLoader", "..\..\..\games\Future Pinball\BAM\FPLoader.exe", "{82279841-4C70-4007-821B-927E953573C1}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "FPLoader", "..\..\..\Games\Future Pinball\BAM\FPLoader.exe", "{82279841-4C70-4007-821B-927E953573C1}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
 		Executable = C:\games\Future Pinball\BAM\FPLoader.exe
@@ -43,12 +43,12 @@ Global
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|Win32.Build.0 = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|x86.ActiveCfg = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|x86.Build.0 = Release|Win32
-		{82279841-4C70-4007-821B-927E953573C1}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{82279841-4C70-4007-821B-927E953573C1}.Debug|Win32.ActiveCfg = Debug|x86
-		{82279841-4C70-4007-821B-927E953573C1}.Debug|x86.ActiveCfg = Debug|x86
-		{82279841-4C70-4007-821B-927E953573C1}.Release|Mixed Platforms.ActiveCfg = Debug|x86
-		{82279841-4C70-4007-821B-927E953573C1}.Release|Win32.ActiveCfg = Debug|x86
-		{82279841-4C70-4007-821B-927E953573C1}.Release|x86.ActiveCfg = Debug|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Debug|Mixed Platforms.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Debug|Win32.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Debug|x86.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Release|Win32.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Release|x86.ActiveCfg = Release|x86
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Win32.ActiveCfg = Debug|Win32
@@ -64,5 +64,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A58E04B6-1FEA-4CA6-A44D-8D533AE35625}
 	EndGlobalSection
 EndGlobal

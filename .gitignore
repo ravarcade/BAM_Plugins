@@ -26,3 +26,6 @@
 *.exe
 *.out
 *.app
+/OpenVR/Debug/*.log
+/.vs/BAM_Plugins/v15/ipch/*.ipch
+*.tlog

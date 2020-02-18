@@ -21,6 +21,26 @@
 *  ravarcade@gmail.com
 */
 
+class CGLRenderModel
+{
+public:
+	CGLRenderModel(const std::string & sRenderModelName);
+	~CGLRenderModel();
+
+	bool BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
+	void Cleanup();
+	void Draw();
+	const std::string & GetName() const { return m_sModelName; }
+
+private:
+	GLuint m_glVertBuffer;
+	GLuint m_glIndexBuffer;
+	GLuint m_glVertArray;
+	GLuint m_glTexture;
+	GLsizei m_unVertexCount;
+	std::string m_sModelName;
+};
+
 struct Ccfg {
 	int Enabled;
 	double CamX, CamY, CamZ;
@@ -31,6 +51,13 @@ struct Ccfg {
 	double Delay;
 	int TrackingMode;
 	double WorldScale;
+	double PixelDensity;
+	int ShowControllers;
+
+	DWORD key_Forward, key_Backward, key_Left, key_Right, key_Up, key_Down;
+	double move_speed;
+	int moveEnabled;
+	DWORD key_FreeCamSwitch;
 };
 
 extern Ccfg cfg;
@@ -80,13 +107,28 @@ public:
 	void UpdateVP(float *V, float *P, int eye);
 	void Submit();
 	void Reset();
-	void CustomReset() { m_bDoCustomHomeReset = true; }
+	void CustomReset() 
+	{ 
+		m_bDoCustomHomeReset = true; 
+		m_movePos[0] = m_movePos[1] = m_movePos[2] = 0;
+	}
+
 
 	bool IsWindowSizeSet() { return m_nWindowWidth != 0; }
 	void SetWindowSize(uint32_t w, uint32_t h) { m_nWindowWidth = w; m_nWindowHeight = h; }
 
 	void SetQuality(EQuality quality) { m_NextQuality = quality; }
 	void SetQuality(int quality) { m_NextQuality = (EQuality)quality; }
+
+	void SetShowControllers(bool v) { m_ShowControllers = v; }
+	void Move(float *v, float speed);
+	void MoveCombine()
+	{
+		cfg.CamX += m_movePos[0];
+		cfg.CamY += m_movePos[1];
+		cfg.CamZ += m_movePos[2];
+		m_movePos[0] = m_movePos[1] = m_movePos[2] = 0;
+	}
 
 private:
 	void _GetHMDMatrixProjectionEye(vr::Hmd_Eye nEye);
@@ -98,18 +140,39 @@ private:
 	GLuint _CompileGLShader(const char *pchShaderName, const char *pchVertexShader, const char *pchFragmentShader);
 	void _SetupDistortion();
 	void _ChangeQuality();
+	void _ReleaseRenderTargets();
 	void _DoCustomHomeReset(const float *pose);
+	void _PoseTranslationResetForDK1(const float *pose);
+
 	vr::DistortionCoordinates_t _ComputeDistortion(vr::EVREye eEye, float fU, float fV);
 
 	// some math helpers
 	void _Identity(float *m);
 	void _Transpose(float *d, float *s);
-	void _Mul(float *O, float *A, float *B);
-	void _ConvertSteamVRMatrix(float *d, float *s);
+	void _Mul(float *O, const float *A, const float *B);
+	void _MulVert(float *O, const float *A, const float *B, bool sw = false);
+	void _ConvertSteamVRMatrix(float *d, const float *s);
+	void _ConvertSteamVRMatrixWithoutInversion(float *d, const float *s);
 	bool _InitHMD();
+	void _UpdateProjection();
 
-	//	void SetViewport(int x, int y, int w, int h);
-	//	void SetFramebuffer(GLuint fb);
+	// ======================================================================== Render models
+	void _SetupRenderModels();
+	void _SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t unTrackedDeviceIndex);
+	CGLRenderModel *_FindOrLoadRenderModel(const char *pchRenderModelName);
+	void _RenderModels();
+	void _ProcessEvents();
+
+	std::vector< CGLRenderModel * > m_vecRenderModels;
+	CGLRenderModel *m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
+	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
+	GLuint m_unRenderModelProgramID;
+	GLint m_nRenderModelMatrixLocation;
+	float m_move[3];
+	float m_moveSpeed;
+	float m_movePos[3];
+
+	// ========================================================================
 
 	std::string _GetTrackedDeviceString(vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL);
 private:
@@ -148,10 +211,21 @@ private:
 
 	uint32_t m_uiIndexSize;
 
+	float m_PixelDensity;
+	bool m_UseSplitScreen;
 	bool m_bVblank;
 	bool m_bGlFinishHack;
 
 	bool m_bDoCustomHomeReset;
+	bool m_DoPoseTranslationResetForDK1;
+
+	float m_FBO_PixelDensity;
+	uint32_t m_FBO_Width;
+	uint32_t m_FBO_Height;
+	bool m_FBO_SplitScreen;
+
+	bool m_ShowControllers;
+	double m_WorldScale;
 };
 
 extern int _DoPostPresentHandoff;

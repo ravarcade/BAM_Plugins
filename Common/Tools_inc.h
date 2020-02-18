@@ -24,7 +24,7 @@
 #include <iostream>
 #include <stdio.h>
 
-bool writeLog = false;
+bool writeLog = true;
 #ifdef _DEBUG
 bool temporaryLog = true;
 #else
@@ -81,6 +81,50 @@ void dbglog(const char *fmt, ...)
 	_ogldbglog(txt);
 }
 
+void _panicLog(const char *txt)
+{
+	FILE *FPlog;
+
+	static bool once = true;
+	const char *_logFileName = "\\panic.log";
+	static char logFileName[1024];
+	if (once)
+	{
+		once = false;
+		HMODULE hm;
+
+		if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			(LPCSTR)&_ogldbglog, &hm))
+		{
+			GetModuleFileNameA(hm, logFileName, sizeof(logFileName));
+			char *p = strrchr(logFileName, '\\');
+			strcpy_s(p, sizeof(logFileName) - (p - logFileName), _logFileName);
+		}
+	}
+
+	fopen_s(&FPlog, logFileName, "a");
+	if (FPlog != NULL) {
+		fwrite(txt, strlen(txt), 1, FPlog);
+		fwrite("\n", 2, 1, FPlog);
+		fclose(FPlog);
+	}
+}
+
+
+void dbgPaniclog(const char *fmt, ...)
+{
+	static char txt[10000];
+	va_list	ap;
+
+	if (fmt == NULL)
+		return;
+
+	va_start(ap, fmt);
+	vsprintf_s(txt, fmt, ap);
+	va_end(ap);
+	_panicLog(txt);
+}
+
 // ============================================================================
 
 class HRTimer {
@@ -128,7 +172,7 @@ public:
 
 // ============================================================================
 
-char tmpLogBuf[1024];
+char tmpLogBuf[10240];
 HRTimer heartRate;
 
 void clearTmpLog()

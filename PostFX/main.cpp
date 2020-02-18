@@ -68,7 +68,7 @@ struct ssao_preset {
 
 CPostFX PostFX;
 
-extern double Z_Near, Z_Far;
+extern double Z_Near, Z_Far, SSAO_AddlMult;
 
 void OnLoad()
 {
@@ -96,6 +96,8 @@ void OnLoad()
 
 	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Z_Near:"DEFPW2"%.2f", &Z_Near, 0.05, 1.0, "");
 	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Z_Far:"DEFPW2"%.2f", &Z_Far, 10.0, 100.0, "");
+	BAM::menu_add_param(PLUGIN_ID_NUM, "#-AddlMult:"DEFPW2"%.2f", &SSAO_AddlMult, 0.1, 1.0, "");
+	
 	BAM::LoadCfg("PostFX", &cfg, sizeof(cfg));
 }
 
@@ -139,15 +141,15 @@ void OnSwapBuffers(HDC hDC)
 	}
 
 	if (cfg.Enabled || hudCounter) {
-		if (false) {
+		if (true) {
 			ssao_preset *p = cfg.SSAO_mode == 0 ? ssao_presets_desktop : ssao_presets_arcade;
 			if (cfg.SSAO_type < ARRAY_ENTRIES(ssao_type) - 1) {
 				cfg.SSAO_res = p[cfg.SSAO_type].res;
-				cfg.SSAO_scale = p[cfg.SSAO_type].scale;
+				cfg.SSAO_scale = p[cfg.SSAO_type].scale/2;
 				cfg.SSAO_range = p[cfg.SSAO_type].range;
 				cfg.SSAO_BlurStrength = p[cfg.SSAO_type].blurStrength;
 				cfg.SSAO_BlurScale = p[cfg.SSAO_type].blurScale;
-				cfg.SSAO_MAX = p[cfg.SSAO_type].max;
+				cfg.SSAO_MAX = p[cfg.SSAO_type].max+0.3;
 				cfg.SSAO_rings = p[cfg.SSAO_type].rings;
 			}
 		}

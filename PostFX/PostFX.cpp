@@ -24,8 +24,10 @@
 #include "stdafx.h"
 #include "PostFX.h"
 void BAM_hud(const char *fmt, ...);
-double Z_Near = 1.0;
+double Z_Near = 0.1;
 double Z_Far = 10000.0;
+double SSAO_AddlMult = 128;
+
 
 // ============================================================================ Tools ===
 
@@ -161,7 +163,7 @@ void CPostFX::Postprocess()
 	_CopyFBOWithDepth(currentFBO, m_FBOs[0].FBO, fullScreenViewport);
 	GLint source[4] = { 0, 0, fullScreenViewport[2], fullScreenViewport[3] };
 
-	bool SSAO = true;
+	bool SSAO = false;
 
 	if (!SSAO)
 	{
@@ -227,7 +229,7 @@ void CPostFX::Postprocess()
 		float lz = (float)w / 2;
 		lz = (float)(lz * (4.0 / (1.0 + rings)));
 
-		zNear = 1; zFar = 1000.0;
+//		zNear = 1; zFar = 1000.0;
 		double range = cfg.SSAO_range;
 		if (cfg.SSAO_mode) {
 			range = range / 999.0;
@@ -251,29 +253,58 @@ void CPostFX::Postprocess()
 		BAM_hud("\nZ_Near = %.3f\n", zNear);
 		BAM_hud("\nZ_Far = %.3f\n", zFar);
 
+		bool FirstPassOnly = false;
+		bool FirstAndBlurOnly = true;
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, m_FBOs[0].depthTex);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_FBOs[0].tex);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_FBOs[1].FBO);
+		if (FirstPassOnly) {
+			glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+			auto &p = m_SSAO[cfg.SSAO_mode ? 1 : 0];
 
-		auto &p = m_SSAO[cfg.SSAO_mode ? 1 : 0];
+			glUseProgram(p.Program);
+			glUniform1i(p.Texture0, 0);
+			glUniform1i(p.Texture1, 1);
+			glUniform4f(p.pixelSize, float(2.0f * zNear), float(zFar - zNear), 1.0f / m_FBOs[0].dim[0], 1.0f / m_FBOs[0].dim[1]);
+			glUniform4f(p.aoRangeLevelAspect, (float)cfg.SSAO_scale * 0.0003f, (float)range, (float)m_FBOs[0].dim[0] / (float)m_FBOs[0].dim[1], (float)(cfg.SSAO_scale*SSAO_AddlMult));
+			glUniform1i(p.rings, rings == 0 ? 3 : rings);
+			glUniform1f(p.gamma, (GLfloat)lcfg.gamma);
+			glUniform4f(p.frameBounds, 
+				(float)((double)source[0] / (double)m_FBOs[0].dim[0]), 
+				(float)((double)source[1] / (double)m_FBOs[0].dim[1]),
+				(float)((double)(source[0] + source[2]) / (double)m_FBOs[0].dim[0]),
+				(float)((double)(source[1] + source[3]) / (double)m_FBOs[0].dim[1]));
 
-		glUseProgram(p.Program);
-		glUniform1i(p.Texture0, 0);
-		glUniform1i(p.Texture1, 1);
-		glUniform4f(p.pixelSize, float(2.0f * zNear), float(zFar - zNear), 1.0f / m_FBOs[0].dim[0], 1.0f / m_FBOs[0].dim[1]);
-		glUniform4f(p.aoRangeLevelAspect, (float)cfg.SSAO_scale * 0.0003f, (float)range, (float)m_FBOs[0].dim[0] / m_FBOs[0].dim[1], (float)cfg.SSAO_scale);
-		glUniform1i(p.rings, rings == 0 ? 3 : rings);
-		glUniform1f(p.gamma, (GLfloat)lcfg.gamma);
-		_DrawQuad(dstSsao, fullScreenViewport + 2, source, m_FBOs[0].dim, p.ScalePosition, p.ScaleTexture);
+//			dstSsao[0] += dstSsao[2];
 
+			_DrawQuad(dstSsao, fullScreenViewport + 2, source, m_FBOs[0].dim, p.ScalePosition, p.ScaleTexture);
+		}
+		else {
+			glBindFramebuffer(GL_FRAMEBUFFER, m_FBOs[1].FBO);
+			auto &p = m_SSAO[cfg.SSAO_mode ? 1 : 0];
+
+			glUseProgram(p.Program);
+			glUniform1i(p.Texture0, 0);
+			glUniform1i(p.Texture1, 1);
+			glUniform4f(p.pixelSize, float(2.0f * zNear), float(zFar - zNear), 1.0f / m_FBOs[0].dim[0], 1.0f / m_FBOs[0].dim[1]);
+			glUniform4f(p.aoRangeLevelAspect, (float)cfg.SSAO_scale * 0.0003f, (float)range, (float)m_FBOs[0].dim[0] / m_FBOs[0].dim[1], (float)(cfg.SSAO_scale*SSAO_AddlMult));
+			glUniform1i(p.rings, rings == 0 ? 3 : rings);
+			glUniform1f(p.gamma, (GLfloat)lcfg.gamma);
+			glUniform4f(p.frameBounds,
+				(float)((double)source[0] / (double)m_FBOs[0].dim[0]),
+				(float)((double)source[1] / (double)m_FBOs[0].dim[1]),
+				(float)((double)(source[0] + source[2]) / (double)m_FBOs[0].dim[0]),
+				(float)((double)(source[1] + source[3]) / (double)m_FBOs[0].dim[1]));
+
+			_DrawQuad(dstSsao, fullScreenViewport + 2, source, m_FBOs[0].dim, p.ScalePosition, p.ScaleTexture);
+		}
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0);
 
-		if (false) {
+		if (true) {
 			// pass 2 - blur - vertical
 			// render fbo[1] to fbo[2]
 			glBindFramebuffer(GL_FRAMEBUFFER, m_FBOs[2].FBO);
@@ -288,30 +319,48 @@ void CPostFX::Postprocess()
 			glUniform1f(m_P2_TexelSize, (GLfloat)0.5f / m_FBOs[1].dim[0]);
 			_DrawQuad(dstSsao, fullScreenViewport + 2, dstSsao, m_FBOs[1].dim, m_P2_ScalePosition, m_P2_ScaleTexture);
 
-			// pass 2 - blur - horizontal
-			// render fbo[2] to fbo[1]
-			glBindFramebuffer(GL_FRAMEBUFFER, m_FBOs[1].FBO);
-			glBindTexture(GL_TEXTURE_2D, m_FBOs[2].tex);
-			glUniform1i(m_P2_Orientation, 0);
-			_DrawQuad(dstSsao, fullScreenViewport + 2, dstSsao, m_FBOs[2].dim, m_P2_ScalePosition, m_P2_ScaleTexture);
-
+			if (FirstAndBlurOnly)
+			{
+				// pass 2 - blur - horizontal
+				// render fbo[2] to fbo[1]
+				glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+				glBindTexture(GL_TEXTURE_2D, m_FBOs[2].tex);
+				glUniform1i(m_P2_Orientation, 0);
+				GLint dstSsao2[4] = { 0, 0,
+					cfg.SSAO_res ? fullScreenViewport[2] : fullScreenViewport[2] / 2,
+					cfg.SSAO_res ? fullScreenViewport[3] : fullScreenViewport[3] / 2
+				};
+//				dstSsao2[0] += dstSsao2[2];
+				_DrawQuad(dstSsao2, fullScreenViewport + 2, dstSsao, m_FBOs[2].dim, m_P2_ScalePosition, m_P2_ScaleTexture);
+				
+			}
+			else {
+				// pass 2 - blur - horizontal
+				// render fbo[2] to fbo[1]
+				glBindFramebuffer(GL_FRAMEBUFFER, m_FBOs[1].FBO);
+				glBindTexture(GL_TEXTURE_2D, m_FBOs[2].tex);
+				glUniform1i(m_P2_Orientation, 0);
+				_DrawQuad(dstSsao, fullScreenViewport + 2, dstSsao, m_FBOs[2].dim, m_P2_ScalePosition, m_P2_ScaleTexture);
+			}
 		}
 
-		// pass 3 - combine fbo[0] & fbo[1]
-		glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
-		//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glUseProgram(m_SSAO_2);
-		glUniform1i(m_S2_tex, 0);
-		glUniform1i(m_S2_tex2, 1);
-		glUniform2f(m_S2_ssao_max_blur_amount, (GLfloat)cfg.SSAO_MAX, (GLfloat)lcfg.BlurAmount);
+		if (!FirstPassOnly && !FirstAndBlurOnly) {
+			// pass 3 - combine fbo[0] & fbo[1]
+			glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+			//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glUseProgram(m_SSAO_2);
+			glUniform1i(m_S2_tex, 0);
+			glUniform1i(m_S2_tex2, 1);
+			glUniform2f(m_S2_ssao_max_blur_amount, (GLfloat)cfg.SSAO_MAX, (GLfloat)lcfg.BlurAmount);
 
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, m_FBOs[1].tex);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, m_FBOs[1].tex);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_FBOs[0].tex);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_FBOs[0].tex);
 
-		_DrawQuad(fullScreenViewport, fullScreenViewport + 2, fullScreenViewport, m_FBOs[0].dim, m_S2_ScalePosition, m_S2_ScaleTexture);
+			_DrawQuad(fullScreenViewport, fullScreenViewport + 2, fullScreenViewport, m_FBOs[0].dim, m_S2_ScalePosition, m_S2_ScaleTexture);
+		}
 	}
 
 	glActiveTexture(GL_TEXTURE1);
@@ -557,6 +606,8 @@ void CPostFX::_CreateShaders()
 		p.pixelSize = glGetUniformLocation(p.Program, "pixelSize");
 		p.aoRangeLevelAspect = glGetUniformLocation(p.Program, "aoRangeLevelAspect");
 		p.gamma = glGetUniformLocation(p.Program, "gamma");
+		p.frameBounds = glGetUniformLocation(p.Program, "frameBounds");
+
 		p.Texture0 = glGetUniformLocation(p.Program, "Texture0");
 		p.Texture1 = glGetUniformLocation(p.Program, "Texture1");
 		p.rings = glGetUniformLocation(p.Program, "rings");

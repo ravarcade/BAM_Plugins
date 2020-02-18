@@ -42,6 +42,7 @@ const char *cfgFileName = "OpenVR";
 const char *vsync[] = { "Off", "On" };
 const char *trackingMode[] = { "Seated", "Standing" };
 const char *poseWaitTxt[] = { "[1]", "[2]", "[3]", "[4]" };
+const char *showViveControllersTxt[] = { "Hide", "Show w/BAM menu", "Show Allways" };
 
 // pointers to BAM table cfg data
 double *pCfgY, *pCfgZ, *pCfgAngle;
@@ -61,8 +62,10 @@ void OnLoad()
 	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Z:"DEFPW2"%.2f", &cfg.CamZ, 1.0, 20.0, "");
 	BAM::menu_add_info(PLUGIN_ID_NUM, "#c777##-Other"DEFIW);
 	BAM::menu_add_switch(PLUGIN_ID_NUM, "#-AA Mode:"DEFPW"#+ #cfff#%s", &cfg.Quality, quality_modes, ARRAY_ENTRIES(quality_modes), "");
+//	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Pixel Density:"DEFPW2"%.2f", &cfg.PixelDensity, 0.01, 0.05, "");
 	BAM::menu_add_switch(PLUGIN_ID_NUM, "#-VSync:"DEFPW"#+ #cfff#%s", &cfg.VSync, vsync, ARRAY_ENTRIES(vsync), "");
 	BAM::menu_add_key(PLUGIN_ID_NUM, "#-Home key:"DEFPW"#+%s#r85#", &cfg.HomeKey);
+	BAM::menu_add_switch(PLUGIN_ID_NUM, "#-Show controlers:"DEFPW"#+ #cfff#%s", &cfg.ShowControllers, showViveControllersTxt, ARRAY_ENTRIES(showViveControllersTxt), "");
 	BAM::menu_add_param(PLUGIN_ID_NUM, "#-Frame latency:"DEFPW2"%.0f", &cfg.Delay, 1., 1, "Number of frames rendered before display.[-1 , 2]");
 #ifdef _DEBUG
 	BAM::menu_add_switch(PLUGIN_ID_NUM, "#-PresentHandoff:"DEFPW"#+ #cfff#%s", &_DoPostPresentHandoff, vsync, ARRAY_ENTRIES(vsync), "");
@@ -71,6 +74,26 @@ void OnLoad()
 	BAM::menu_add_switch(PLUGIN_ID_NUM, "#-DisableSubmit:"DEFPW"#+ #cfff#%s", &_DisableSubmit, vsync, ARRAY_ENTRIES(vsync), "");
 	BAM::menu_add_switch(PLUGIN_ID_NUM, "#-PoseWait:"DEFPW"#+ #cfff#%s", &_PoseWait, poseWaitTxt, ARRAY_ENTRIES(poseWaitTxt), "");
 #endif
+
+	//BAM::sub
+	int submenuid = BAM::create_submenu(PLUGIN_ID_NUM);
+	BAM::menu_add_info(submenuid, "#c777##-Free Cam Options"DEFIW);
+	BAM::menu_add_back_button(submenuid);
+	BAM::menu_add_switch(submenuid, "#-Enable Free Cam:"DEFPW"#+ #cfff#%s", &cfg.moveEnabled, vsync, ARRAY_ENTRIES(vsync), "");
+	BAM::menu_add_param(submenuid, "#-Move speed:"DEFPW2"%.0f", &cfg.move_speed, 1., 1, "");
+	BAM::menu_add_button(submenuid, "#-Set Default Camera Position"DEFIW, [](int) { if (ovr) ovr->MoveCombine(); });
+	BAM::menu_add_info(submenuid, "#c777##-Redefine Keys"DEFIW);
+	BAM::menu_add_key(submenuid, "#-Forward:"DEFPW"#+%s#r85#", &cfg.key_Forward);
+	BAM::menu_add_key(submenuid, "#-Back:"DEFPW"#+%s#r85#", &cfg.key_Backward);
+	BAM::menu_add_key(submenuid, "#-Left:"DEFPW"#+%s#r85#", &cfg.key_Left);
+	BAM::menu_add_key(submenuid, "#-Right:"DEFPW"#+%s#r85#", &cfg.key_Right);
+	BAM::menu_add_key(submenuid, "#-Up:"DEFPW"#+%s#r85#", &cfg.key_Up);
+	BAM::menu_add_key(submenuid, "#-Down:"DEFPW"#+%s#r85#", &cfg.key_Down);
+	BAM::menu_add_key(submenuid, "#-Free Cam On/Off:"DEFPW"#+%s#r85#", &cfg.key_FreeCamSwitch);
+	BAM::menu_add_back_button(submenuid);
+
+	BAM::menu_add_submenu(PLUGIN_ID_NUM, "Free Cam Options"DEFIW, submenuid, "");
+
 	BAM::menu_add_info(PLUGIN_ID_NUM, "#c777##-Standard options"DEFIW);
 	BAM::menu_add_TL(PLUGIN_ID_NUM);
 	BAM::menu_add_Reality(PLUGIN_ID_NUM);
@@ -123,8 +146,10 @@ void dbgMatrix(const char *name, float *m)
 		);
 }
 
+int HudIsVisibleCounter = 0;
 void OnHudDisplay()
 {
+	HudIsVisibleCounter = 5;
 	if (ovr)
 	{
 	}
@@ -132,6 +157,13 @@ void OnHudDisplay()
 
 void OnUpdateVP(float *V, float *P, int eye)
 {
+	if (HudIsVisibleCounter > 0)
+	{
+		--HudIsVisibleCounter;
+	}
+	if (ovr)
+		ovr->SetShowControllers((cfg.ShowControllers == 1 && HudIsVisibleCounter > 0) || cfg.ShowControllers == 2);
+
 	if (cfg.WorldScale < 0.2)
 		cfg.WorldScale = 0.2;
 	if (cfg.WorldScale > 5.0)
@@ -158,6 +190,15 @@ void OnUpdateVP(float *V, float *P, int eye)
 		glLoadMatrixf(V);
 	}
 }
+
+int ReadKeyAsync(int key)
+{
+	key &= 0x1ff; // 256 keys + 256 joy buttons
+	//	SHORT state = GetAsyncKeyState(key);
+	SHORT state = BAM::GetAsyncButtonState(key);
+	return (state << 8) != 0;
+}
+
 
 int ReadKeyboard(int key)
 {
@@ -195,6 +236,7 @@ void DoSwapBuffers()
 
 void BAM_log(const char *fmt, ...)
 {
+	return;
 	va_list ap;
 	va_start(ap, fmt);
 	BAM::VhudDebugLong(fmt, ap);
@@ -203,6 +245,7 @@ void BAM_log(const char *fmt, ...)
 
 void BAM_hud(const char *fmt, ...)
 {
+//	return;
 	va_list ap;
 	va_start(ap, fmt);
 	BAM::VhudDebug(fmt, ap);
@@ -247,7 +290,55 @@ void OnSwapBuffers(HDC hDC)
 		if (ReadKeyboard(cfg.HomeKey))
 		{
 			ovr->Reset();
+			BAM::hudDebugLong("[reset]");
 			ovr->CustomReset();
+		}
+
+		if (ReadKeyboard(cfg.key_FreeCamSwitch))
+		{
+			cfg.moveEnabled = cfg.moveEnabled ? 0 : 1;
+		}
+
+		if (cfg.moveEnabled) {
+			static float move[3];
+			move[0] = move[1] = move[2] = 0;
+
+			if (ReadKeyAsync(cfg.key_Forward))
+			{
+				BAM::hudDebug("[W]");
+				move[2] = -1;
+			}
+			if (ReadKeyAsync(cfg.key_Backward))
+			{
+				BAM::hudDebug("[S]");
+				move[2] = 1;
+			}
+			if (ReadKeyAsync(cfg.key_Left))
+			{
+				BAM::hudDebug("[A]");
+				move[0] = -1;
+			}
+			if (ReadKeyAsync(cfg.key_Right))
+			{
+				BAM::hudDebug("[D]");
+				move[0] = 1;
+			}
+
+			if (ReadKeyAsync(cfg.key_Up))
+			{
+				BAM::hudDebug("[U]");
+				move[1] = 1;
+			}
+			if (ReadKeyAsync(cfg.key_Down))
+			{
+				BAM::hudDebug("[d]");
+				move[1] = -1;
+			}
+
+			if (move[0] || move[1] || move[2])
+			{
+				ovr->Move(move, static_cast<float>(cfg.move_speed));
+			}
 		}
 	}
 }

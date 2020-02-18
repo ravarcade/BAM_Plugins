@@ -66,6 +66,12 @@ namespace BAM_Internal {
 
 	BAMIMPORT short BAM_GetAsyncButtonState(int btn);
 
+	BAMIMPORT int BAM_create_submenu(int ParentSubMenuId);
+	BAMIMPORT void BAM_menu_add_back_button(int SubMenuId);
+	BAMIMPORT void BAM_menu_add_submenu(int ParentSubMenuId, const char *txt, int SubMenuID, const char *help);
+	BAMIMPORT void BAM_menu_add_button(int PluginID, const char *txt, void (*func)(int));
+
+
 	/// <summary>
 	/// Helper class used for late binding of BAM functions
 	/// </summary>

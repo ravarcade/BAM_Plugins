@@ -7,6 +7,8 @@ uniform int rings;
 uniform vec4 pixelSize; // and depth conversion params
 uniform vec4 aoRangeLevelAspect; // and aspe
 uniform float gamma;
+uniform vec4 frameBounds;
+
 //uniform vec2 texel;
 
 
@@ -46,9 +48,9 @@ void main(void)
 
 	vec2 ofs;
 	float d;
-	int samples = 3;
+	int samples = 4;
 	float TWO_PI = 2.0 * 3.14159265;
-	float ang = noise.y * 1000.0 * TWO_PI;
+	float ang = noise.y * TWO_PI;
 	float sc = 1;
 	for ( int i = 1 ; i <= rings; i++ ) {
 		float angleStep = TWO_PI / float( samples * i );
@@ -57,11 +59,11 @@ void main(void)
 		for ( int j = 1 ; j <= samples*i; j++ ) {
 		    ang = ang + angleStep;
 			ofs = vec2(cos(ang), sin(ang)) * ofsscale;
-
-			d = read_depth( gl_TexCoord[0].xy + ofs );
+			vec2 co = clamp(gl_TexCoord[0].xy + ofs, frameBounds.xy, frameBounds.zw );
+			d = read_depth( co );
 
 //			// ignore occluder with too low depth value (possible viewmodel)
-//			if ( d < Local1.x ) continue;
+//			if ( d < pixelSize.x ) continue;
 			ao += compare_depth( depth, d ) * sc;
 		}
 	}
@@ -69,4 +71,36 @@ void main(void)
 	vec3 color = pow(texture2D( Texture0, gl_TexCoord[0].xy ).rgb, vec3(2.2));
 
 	gl_FragColor = vec4(pow(color, vec3(gamma/2.2)), ao);
+//	gl_FragColor.rb = edges;
+/*
+	vec2 of2 = vec2(0);
+//	ang = 3*TWO_PI/float(8);
+//	radius = vec2(0.001, 0.001);
+	ofs = vec2(cos(ang), sin(ang)) * radius;
+	of2 += ofs;
+	d = read_depth( gl_TexCoord[0].xy + ofs );
+	float angleStep = TWO_PI / float( 4 );
+	float tao = compare_depth( depth, d ) / 4;
+
+    ang = ang + angleStep;
+	ofs = vec2(cos(ang), sin(ang)) * radius;
+	of2 += ofs;
+	d = read_depth( gl_TexCoord[0].xy + ofs );
+	tao += compare_depth( depth, d ) / 4;
+
+    ang = ang + angleStep;
+	ofs = vec2(cos(ang), sin(ang)) * radius;
+	of2 += ofs;
+	d = read_depth( gl_TexCoord[0].xy + ofs );
+	tao += compare_depth( depth, d ) / 4;
+
+    ang = ang + angleStep;
+	ofs = vec2(cos(ang), sin(ang)) * radius;
+	of2 += ofs;
+	d = read_depth( gl_TexCoord[0].xy + ofs );
+	tao += compare_depth( depth, d ) / 4;
+	*/
+//	gl_FragColor = vec4(ofs*100.0,1,1);
+//	gl_FragColor = vec4(ao+0.5, ao*0.25+0.5, ao*0.1+0.5,1);
+	gl_FragColor = vec4(ao, ao, ao,1);
 }

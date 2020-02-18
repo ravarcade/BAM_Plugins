@@ -50,6 +50,11 @@ namespace BAM {
 	BAM_Function(menu_additional_data);
 
 	BAM_Function(GetAsyncButtonState);
+
+	BAM_Function(create_submenu);
+	BAM_Function(menu_add_back_button);
+	BAM_Function(menu_add_submenu);
+	BAM_Function(menu_add_button);
 };
 
 // functions called from BAM.dll - they must be implemented.

@@ -108,6 +108,7 @@ private:
 		GLint pixelSize;
 		GLint aoRangeLevelAspect;
 		GLint gamma;
+		GLint frameBounds;
 
 		GLint Texture0;
 		GLint Texture1;
