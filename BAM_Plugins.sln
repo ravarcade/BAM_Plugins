@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.779
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenVR", "OpenVR\OpenVR.vcxproj", "{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}"
 EndProject
@@ -26,9 +26,15 @@ Global
 		Debug|Mixed Platforms = Debug|Mixed Platforms
 		Debug|Win32 = Debug|Win32
 		Debug|x86 = Debug|x86
+		Debug-ovr-0.9.20|Mixed Platforms = Debug-ovr-0.9.20|Mixed Platforms
+		Debug-ovr-0.9.20|Win32 = Debug-ovr-0.9.20|Win32
+		Debug-ovr-0.9.20|x86 = Debug-ovr-0.9.20|x86
 		Release|Mixed Platforms = Release|Mixed Platforms
 		Release|Win32 = Release|Win32
 		Release|x86 = Release|x86
+		Release-0.9.20|Mixed Platforms = Release-0.9.20|Mixed Platforms
+		Release-0.9.20|Win32 = Release-0.9.20|Win32
+		Release-0.9.20|x86 = Release-0.9.20|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
@@ -37,30 +43,60 @@ Global
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug|Win32.Build.0 = Debug|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug|x86.ActiveCfg = Debug|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug|x86.Build.0 = Debug|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug-ovr-0.9.20|Mixed Platforms.ActiveCfg = Debug-ovr-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug-ovr-0.9.20|Mixed Platforms.Build.0 = Debug-ovr-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug-ovr-0.9.20|Win32.ActiveCfg = Debug-ovr-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug-ovr-0.9.20|Win32.Build.0 = Debug-ovr-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug-ovr-0.9.20|x86.ActiveCfg = Debug-ovr-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Debug-ovr-0.9.20|x86.Build.0 = Debug-ovr-0.9.20|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|Win32.ActiveCfg = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|Win32.Build.0 = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|x86.ActiveCfg = Release|Win32
 		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release|x86.Build.0 = Release|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release-0.9.20|Mixed Platforms.ActiveCfg = Release-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release-0.9.20|Mixed Platforms.Build.0 = Release-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release-0.9.20|Win32.ActiveCfg = Release-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release-0.9.20|Win32.Build.0 = Release-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release-0.9.20|x86.ActiveCfg = Release-0.9.20|Win32
+		{86DF60BD-4F3E-4F43-A69A-71ABB2CA605E}.Release-0.9.20|x86.Build.0 = Release-0.9.20|Win32
 		{82279841-4C70-4007-821B-927E953573C1}.Debug|Mixed Platforms.ActiveCfg = Release|x86
 		{82279841-4C70-4007-821B-927E953573C1}.Debug|Win32.ActiveCfg = Release|x86
 		{82279841-4C70-4007-821B-927E953573C1}.Debug|x86.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Debug-ovr-0.9.20|Mixed Platforms.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Debug-ovr-0.9.20|Win32.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Debug-ovr-0.9.20|x86.ActiveCfg = Release|x86
 		{82279841-4C70-4007-821B-927E953573C1}.Release|Mixed Platforms.ActiveCfg = Release|x86
 		{82279841-4C70-4007-821B-927E953573C1}.Release|Win32.ActiveCfg = Release|x86
 		{82279841-4C70-4007-821B-927E953573C1}.Release|x86.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Release-0.9.20|Mixed Platforms.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Release-0.9.20|Win32.ActiveCfg = Release|x86
+		{82279841-4C70-4007-821B-927E953573C1}.Release-0.9.20|x86.ActiveCfg = Release|x86
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|Win32.Build.0 = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|x86.ActiveCfg = Debug|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug|x86.Build.0 = Debug|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug-ovr-0.9.20|Mixed Platforms.ActiveCfg = Debug-ovr-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug-ovr-0.9.20|Mixed Platforms.Build.0 = Debug-ovr-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug-ovr-0.9.20|Win32.ActiveCfg = Debug-ovr-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug-ovr-0.9.20|Win32.Build.0 = Debug-ovr-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug-ovr-0.9.20|x86.ActiveCfg = Debug-ovr-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Debug-ovr-0.9.20|x86.Build.0 = Debug-ovr-0.9.20|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release|Win32.ActiveCfg = Release|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release|Win32.Build.0 = Release|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release|x86.ActiveCfg = Release|Win32
 		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release|x86.Build.0 = Release|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release-0.9.20|Mixed Platforms.ActiveCfg = Release-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release-0.9.20|Mixed Platforms.Build.0 = Release-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release-0.9.20|Win32.ActiveCfg = Release-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release-0.9.20|Win32.Build.0 = Release-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release-0.9.20|x86.ActiveCfg = Release-0.9.20|Win32
+		{612A026B-A184-4A3D-9A6D-A0B2E4E2048F}.Release-0.9.20|x86.Build.0 = Release-0.9.20|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

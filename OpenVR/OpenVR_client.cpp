@@ -25,6 +25,13 @@
 #include "OpenVR_client.h"
 #include "Tools_inc.h"
 
+#define NEW_OPENVR
+#ifdef NEW_OPENVR
+namespace vr {
+	const ETextureType API_OpenGL = vr::TextureType_OpenGL;
+};
+#endif
+
 // internal config
 int _DoPostPresentHandoff = 0; // don't call PostPresentHandoff after frame submit
 int _SplitSubmit = 0; // don't interlenc rendering and frame submision
@@ -311,7 +318,6 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 					tmpLog("GetDeviceToAbsoluteTrackingPose(%d)\n", _PoseWait);
 				}
 
-//				_ConvertSteamVRMatrix(m_mPose, &rTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking.m[0][0]);
 				static float tmpPose[16];
 				_ConvertSteamVRMatrix(tmpPose, &rTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking.m[0][0]);
 				if (m_bDoCustomHomeReset)
@@ -320,8 +326,6 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 					_PoseTranslationResetForDK1(tmpPose);
 
 				_Mul(m_mPose, m_mPoseHome, tmpPose);
-
-				//BAM_hud("m[%.3f, %.3f, %.3f, %.3f]\n", m_move[0], m_move[1], m_move[2], m_moveSpeed);
 
 				float step = fFrameDuration * m_moveSpeed;
 				for (uint32_t i = 0; i < 3; ++i) {
@@ -349,7 +353,6 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 		float pX = (float)cfg.CamX + m_movePos[0];
 		float pY = (float)cfg.CamY + m_movePos[1];
 		float pZ = (float)cfg.CamZ + m_movePos[2];
-		//BAM_hud("[%.3f, %.3f, %.3f]\n", m_movePos[0], m_movePos[1], m_movePos[2]);
 		if (cfg.TrackingMode)
 		{
 			pY = (float)(FPGround);
@@ -374,7 +377,6 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 		if (m_Eye == LEFT) {
 			auto &fb = m_Framebuffers[m_Eye];
 			glBindFramebuffer(GL_FRAMEBUFFER, fb.m_nRenderFramebufferId);
-//			glViewport(0, 0, m_FBO_Width, m_FBO_Height);
 			glViewport(0, 0, m_FBO_Width+500, m_FBO_Height/2);
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		}
@@ -384,8 +386,6 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 				glBindFramebuffer(GL_FRAMEBUFFER, fb.m_nRenderFramebufferId);
 			}
 			glViewport(0, m_FBO_Height/2, m_FBO_Width+500, m_FBO_Height / 2);
-//			glViewport(m_FBO_Width, 0, m_FBO_Width, m_FBO_Height);
-//			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		}
 
 	}
@@ -635,7 +635,11 @@ void COpenVR_client::Reset()
 {
 	if (m_pHMD)
 	{
+#ifdef NEW_OPENVR
+		vr::VRChaperone()->ResetZeroPose(vr::TrackingUniverseSeated);
+#else
 		m_pHMD->ResetSeatedZeroPose();
+#endif
 	}
 }
 
@@ -791,10 +795,13 @@ void COpenVR_client::_GetHMDMatrixProjectionEye(vr::Hmd_Eye nEye)
 		return _Identity(m);
 
 	
-	vr::HmdMatrix44_t mat = m_pHMD->GetProjectionMatrix(nEye, 
-		static_cast<float>(m_fNearClip*cfg.WorldScale), 
-		static_cast<float>(m_fFarClip*cfg.WorldScale),
-		vr::API_OpenGL);
+	vr::HmdMatrix44_t mat = m_pHMD->GetProjectionMatrix(nEye 
+		, static_cast<float>(m_fNearClip*cfg.WorldScale) 
+		, static_cast<float>(m_fFarClip*cfg.WorldScale)
+#ifndef NEW_OPENVR
+		, vr::API_OpenGL
+#endif
+	);
 	m_WorldScale = cfg.WorldScale;
 
 	_Transpose(m, &mat.m[0][0]);
@@ -853,20 +860,6 @@ void COpenVR_client::_ConvertSteamVRMatrix(float *d, const float *s)
 void COpenVR_client::_PoseTranslationResetForDK1(const float *pose)
 {
 	const float *M = pose;
-//	float a = atan2(M[2], M[10]);
-//	float *R = m_mPoseHome;
-//	memset(R, 0, sizeof(float[16]));
-
-//	float c = cosf(a);
-//	float s = sinf(a);
-
-//	R[0] = c;
-//	R[2] = -s;
-//	R[8] = s;
-//	R[10] = c;
-//	R[5] = 1;
-//	R[15] = 1;
-
 	float *T = m_mPoseHome;
 	float x = M[12], y = M[13], z = M[14];
 	T[12] = -(M[0] * x + M[1] * y + M[2] * z);
@@ -1375,28 +1368,25 @@ void COpenVR_client::_SetupDistortion()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, texCoordRed));
 
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, texCoordGreen));
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void*)offsetof(VertexDataLens, texCoordGreen));
 
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, texCoordBlue));
+glEnableVertexAttribArray(3);
+glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void*)offsetof(VertexDataLens, texCoordBlue));
 
-	glBindVertexArray(0);
+glBindVertexArray(0);
 
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(3);
+glDisableVertexAttribArray(0);
+glDisableVertexAttribArray(1);
+glDisableVertexAttribArray(2);
+glDisableVertexAttribArray(3);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+glBindBuffer(GL_ARRAY_BUFFER, 0);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 vr::DistortionCoordinates_t COpenVR_client::_ComputeDistortion(vr::EVREye eEye, float fU, float fV)
 {
-//	if (m_pHMD)
-//		return m_pHMD->ComputeDistortion(eEye, fU, fV);
-
 	vr::DistortionCoordinates_t d;
 
 	// lame
@@ -1420,52 +1410,11 @@ void COpenVR_client::_RenderDistortion()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glDrawElements(GL_TRIANGLES, m_uiIndexSize / 2, GL_UNSIGNED_SHORT, 0);
-	/*
-	//render right lens (second half of index array )
-	glBindTexture(GL_TEXTURE_2D, m_Framebuffers[RIGHT].m_nResolveTextureId);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glDrawElements(GL_TRIANGLES, m_uiIndexSize / 2, GL_UNSIGNED_SHORT, (const void *)(m_uiIndexSize));
-	*/
+
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
-/*
-void COpenVR_client::_UpdateHMDMatrixPose()
-{
-	if (!m_pHMD)
-		return;
 
-	vr::VRCompositor()->WaitGetPoses(m_TrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0);
-
-	for (int nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice)
-	{
-		if (rTrackedDevicePose[nDevice].bPoseIsValid)
-		{
-			m_rmat4DevicePose[nDevice] = ConvertSteamVRMatrixToMatrix4(rTrackedDevicePose[nDevice].mDeviceToAbsoluteTracking);
-			if (m_rDevClassChar[nDevice] == 0)
-			{
-				switch (m_pHMD->GetTrackedDeviceClass(nDevice))
-				{
-				case vr::TrackedDeviceClass_Controller:        m_rDevClassChar[nDevice] = 'C'; break;
-				case vr::TrackedDeviceClass_HMD:               m_rDevClassChar[nDevice] = 'H'; break;
-				case vr::TrackedDeviceClass_Invalid:           m_rDevClassChar[nDevice] = 'I'; break;
-				case vr::TrackedDeviceClass_Other:             m_rDevClassChar[nDevice] = 'O'; break;
-				case vr::TrackedDeviceClass_TrackingReference: m_rDevClassChar[nDevice] = 'T'; break;
-				default:                                       m_rDevClassChar[nDevice] = '?'; break;
-				}
-			}
-		}
-	}
-
-	if (m_rTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
-	{
-		m_mat4HMDPose = m_rmat4DevicePose[vr::k_unTrackedDeviceIndex_Hmd].invert();
-	}
-}
-*/
 //-----------------------------------------------------------------------------
 // Purpose: Create/destroy GL Render Models
 //-----------------------------------------------------------------------------
@@ -1473,16 +1422,17 @@ void COpenVR_client::_RenderModels()
 {
 	if (!m_pHMD)
 		return;
-//	BAM_hud("RM: start\n");
+#ifdef NEW_OPENVR
+	if (vr::VRCompositor()->CanRenderScene()) {
+#else
 	if (m_pHMD->IsInputFocusCapturedByAnotherProcess()) {
-//		BAM_hud("RM: No focus\n");
+#endif
 		return;
 	}
 	_ProcessEvents();
 
 	const GLfloat *P = m_mProjection[m_Eye];
 
-//	glClearColor(0, 0, 1, 1);
 	auto &fb = m_Framebuffers[m_Eye];
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.m_nRenderFramebufferId);
 	glViewport(0, 0, m_FBO_Width, m_FBO_Height);
@@ -1497,8 +1447,6 @@ void COpenVR_client::_RenderModels()
 		if (!m_rTrackedDeviceToRenderModel[unTrackedDevice] || !m_rbShowTrackedDevice[unTrackedDevice])
 			continue;
 
-//		BAM_hud("RM: Try: %d\n", unTrackedDevice);
-
 		const vr::TrackedDevicePose_t & pose = m_TrackedDevicePose[unTrackedDevice];
 		if (_ForceDrawController && unTrackedDevice == _ForcedToDrawControllerID)
 		{
@@ -1508,16 +1456,11 @@ void COpenVR_client::_RenderModels()
 			if (!pose.bPoseIsValid)
 				continue;
 		}
-		 
 
-		if (false)
-		if (m_pHMD->GetTrackedDeviceClass(unTrackedDevice) == vr::TrackedDeviceClass_Controller)
+		if (m_pHMD->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
 			continue;
 
-		// MVP matrix
-
 		GLfloat tmpV[16], tmpV2[16];
-//		_ConvertSteamVRMatrix(tmpV, &pose.mDeviceToAbsoluteTracking.m[0][0]);
 		_ConvertSteamVRMatrixWithoutInversion(tmpV, &pose.mDeviceToAbsoluteTracking.m[0][0]);
 
 		if (_ForceDrawController) {
@@ -1543,56 +1486,8 @@ void COpenVR_client::_RenderModels()
 		GLfloat mvp[16];
 		_Mul(mvp, V, P);
 
-//		const Matrix4 & matDeviceToTracking = m_rmat4DevicePose[unTrackedDevice];
-//		Matrix4 matMVP = GetCurrentViewProjectionMatrix(nEye) * matDeviceToTracking;
 		glUniformMatrix4fv(m_nRenderModelMatrixLocation, 1, GL_FALSE, mvp);
-//		BAM_hud("RM: Draw: %d\n", unTrackedDevice);
 		m_rTrackedDeviceToRenderModel[unTrackedDevice]->Draw();
-
-		if (false)
-		{
-			static int logCounter = 1000;
-//			BAM_hud("[in: %d]\n", logCounter);
-			if (logCounter == 0)
-			{
-				//
-				float *f;
-				dbgPaniclog("float P[2][16] = {\n	{");
-				f = m_mProjection[0];
-				dbgPaniclog("		%f, %f, %f, %f,", f[0], f[1], f[2], f[3]);
-				dbgPaniclog("		%f, %f, %f, %f,", f[4], f[5], f[6], f[7]);
-				dbgPaniclog("		%f, %f, %f, %f,", f[8], f[9], f[10], f[11]);
-				dbgPaniclog("		%f, %f, %f, %f", f[12], f[13], f[14], f[15]);
-				dbgPaniclog("	}, {");
-				f = m_mProjection[1];
-				dbgPaniclog("		%f, %f, %f, %f,", f[0], f[1], f[2], f[3]);
-				dbgPaniclog("		%f, %f, %f, %f,", f[4], f[5], f[6], f[7]);
-				dbgPaniclog("		%f, %f, %f, %f,", f[8], f[9], f[10], f[11]);
-				dbgPaniclog("		%f, %f, %f, %f", f[12], f[13], f[14], f[15]);
-				dbgPaniclog("	}\n};\n");
-
-				f = m_mPose;
-				dbgPaniclog("float mPose[16] = {");
-				dbgPaniclog("	%f, %f, %f, %f,", f[0], f[1], f[2], f[3]);
-				dbgPaniclog("	%f, %f, %f, %f,", f[4], f[5], f[6], f[7]);
-				dbgPaniclog("	%f, %f, %f, %f,", f[8], f[9], f[10], f[11]);
-				dbgPaniclog("	%f, %f, %f, %f", f[12], f[13], f[14], f[15]);
-				dbgPaniclog("};\n");
-
-				for (int i = 0; i < 16; ++i) {
-					f = &m_TrackedDevicePose[i].mDeviceToAbsoluteTracking.m[0][0];
-					dbgPaniclog("float mDeviceToAbsoluteTracking[%d] = {", i);
-					dbgPaniclog("	%f, %f, %f, %f,", f[0], f[1], f[2], f[3]);
-					dbgPaniclog("	%f, %f, %f, %f,", f[4], f[5], f[6], f[7]);
-					dbgPaniclog("	%f, %f, %f, %f", f[8], f[9], f[10], f[11]);
-					dbgPaniclog("};");
-				}
-
-				BAM_log("#+#+[ DONE ]#-#-\n");
-			}
-
-			--logCounter;
-		}
 	}
 
 	glUseProgram(0);
@@ -1659,7 +1554,6 @@ CGLRenderModel *COpenVR_client::_FindOrLoadRenderModel(const char *pchRenderMode
 		if (!_stricmp((*i)->GetName().c_str(), pchRenderModelName))
 		{
 			pRenderModel = *i;
-//			BAM_log("Same model: %s\n", pchRenderModelName);
 			break;
 		}
 	}
@@ -1669,7 +1563,6 @@ CGLRenderModel *COpenVR_client::_FindOrLoadRenderModel(const char *pchRenderMode
 	{
 		vr::RenderModel_t *pModel = NULL;
 		vr::EVRRenderModelError r;
-//		BAM_log("Load model: %s\n", pchRenderModelName);
 		while (r = vr::VRRenderModels()->LoadRenderModel_Async(pchRenderModelName, &pModel)) 
 		{
 			if (r != vr::VRRenderModelError_Loading)
@@ -1680,13 +1573,11 @@ CGLRenderModel *COpenVR_client::_FindOrLoadRenderModel(const char *pchRenderMode
 
 		if (pModel == NULL)
 		{
-//			BAM_log("Unable to load render model %s\n", pchRenderModelName);
 			dbglog("Unable to load render model %s\n", pchRenderModelName);
 			return NULL; // move on to the next tracked device
 		}
 
 		vr::RenderModel_TextureMap_t *pTexture = NULL;
-//		BAM_log("Load texture: %s\n", pchRenderModelName);
 		while (r = vr::VRRenderModels()->LoadTexture_Async(pModel->diffuseTextureId, &pTexture))
 		{
 			if (r != vr::VRRenderModelError_Loading)
@@ -1698,7 +1589,6 @@ CGLRenderModel *COpenVR_client::_FindOrLoadRenderModel(const char *pchRenderMode
 		if (pTexture == NULL)
 		{
 			dbglog("Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName);
-//			BAM_log("Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName);
 			vr::VRRenderModels()->FreeRenderModel(pModel);
 			return NULL; // move on to the next tracked device
 		}
@@ -1707,7 +1597,6 @@ CGLRenderModel *COpenVR_client::_FindOrLoadRenderModel(const char *pchRenderMode
 		if (!pRenderModel->BInit(*pModel, *pTexture))
 		{
 			dbglog("Unable to create GL model from render model %s\n", pchRenderModelName);
-//			BAM_log("Unable to create GL model from render model %s\n", pchRenderModelName);
 			delete pRenderModel;
 			pRenderModel = NULL;
 		}

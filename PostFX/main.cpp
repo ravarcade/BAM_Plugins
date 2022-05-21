@@ -107,7 +107,6 @@ void OnUnload()
 
 void OnPluginStart()
 {
-//	BAM::MessageBox("debug");
 	GLenum nGlewError = glewInit();
 	PostFX.Init();
 }
