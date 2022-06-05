@@ -58,6 +58,7 @@ struct Ccfg {
 	double move_speed;
 	int moveEnabled;
 	DWORD key_FreeCamSwitch;
+	DWORD key_rotLeft, key_rotRight;
 };
 
 extern Ccfg cfg;
@@ -168,9 +169,11 @@ private:
 	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
 	GLuint m_unRenderModelProgramID;
 	GLint m_nRenderModelMatrixLocation;
-	float m_move[3];
+	float m_move[4];
 	float m_moveSpeed;
 	float m_movePos[3];
+	float m_rotSpeed = 2.0f;
+	float m_rot = 0.0;
 
 	// ========================================================================
 

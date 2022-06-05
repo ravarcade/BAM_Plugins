@@ -49,6 +49,7 @@ double *pCfgY, *pCfgZ, *pCfgAngle;
 
 void OnLoad()
 {
+	BAM::MessageBox("ovr");
 #ifdef _DEBUG
 	//	BAM::MessageBox("Now attache debuger to Future Pinball.exe\n[menu: DEBUG -> Attache to process..]");
 #endif
@@ -90,6 +91,8 @@ void OnLoad()
 	BAM::menu_add_key(submenuid, "#-Up:"DEFPW"#+%s#r85#", &cfg.key_Up);
 	BAM::menu_add_key(submenuid, "#-Down:"DEFPW"#+%s#r85#", &cfg.key_Down);
 	BAM::menu_add_key(submenuid, "#-Free Cam On/Off:"DEFPW"#+%s#r85#", &cfg.key_FreeCamSwitch);
+	BAM::menu_add_key(submenuid, "#-Rot-Left:"DEFPW"#+%s#r85#", &cfg.key_rotLeft);
+	BAM::menu_add_key(submenuid, "#-Rot-Right:"DEFPW"#+%s#r85#", &cfg.key_rotRight);
 	BAM::menu_add_back_button(submenuid);
 
 	BAM::menu_add_submenu(PLUGIN_ID_NUM, "Free Cam Options"DEFIW, submenuid, "");
@@ -97,7 +100,7 @@ void OnLoad()
 	BAM::menu_add_info(PLUGIN_ID_NUM, "#c777##-Standard options"DEFIW);
 	BAM::menu_add_TL(PLUGIN_ID_NUM);
 	BAM::menu_add_Reality(PLUGIN_ID_NUM);
-
+	BAM::MessageBox("ovr");
 	// Load configuration
 	BAM::LoadCfg(cfgFileName, &cfg, sizeof(cfg));
 
@@ -300,8 +303,8 @@ void OnSwapBuffers(HDC hDC)
 		}
 
 		if (cfg.moveEnabled) {
-			static float move[3];
-			move[0] = move[1] = move[2] = 0;
+			static float move[4];
+			move[0] = move[1] = move[2] = move[3] = 0;
 
 			if (ReadKeyAsync(cfg.key_Forward))
 			{
@@ -335,7 +338,17 @@ void OnSwapBuffers(HDC hDC)
 				move[1] = -1;
 			}
 
-			if (move[0] || move[1] || move[2])
+			if (ReadKeyAsync(cfg.key_rotLeft))
+			{
+				move[3] = -1;
+			}
+
+			if (ReadKeyAsync(cfg.key_rotRight))
+			{
+				move[3] = 1;
+			}
+
+			if (move[0] || move[1] || move[2] || move[3])
 			{
 				ovr->Move(move, static_cast<float>(cfg.move_speed));
 			}

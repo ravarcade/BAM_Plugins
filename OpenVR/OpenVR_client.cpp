@@ -163,6 +163,7 @@ COpenVR_client::COpenVR_client() :
 	memset(m_movePos, 0, sizeof(float) * 3);
 	memset(m_move, 0, sizeof(float) * 3);
 	m_moveSpeed = 0;
+	m_rot = 0.0f;
 }
 
 
@@ -278,6 +279,7 @@ void COpenVR_client::Move(float *v, float speed)
 	m_move[0] = v[0];
 	m_move[1] = v[1];
 	m_move[2] = v[2];
+	m_move[3] = v[3];
 	m_moveSpeed = speed;
 }
 
@@ -331,8 +333,8 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 				for (uint32_t i = 0; i < 3; ++i) {
 					m_movePos[i] += step * (m_move[0] * m_mPose[4*i + 0] + m_move[1] * m_mPose[4*i + 1] + m_move[2] * m_mPose[4*i + 2]);
 				}
-
-				m_move[0] = m_move[1] = m_move[2] = 0;
+				m_rot += m_move[3] * fFrameDuration * m_rotSpeed;
+				m_move[0] = m_move[1] = m_move[2] = m_move[3] = 0;
 			}
 		}
 
@@ -357,6 +359,15 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 		{
 			pY = (float)(FPGround);
 		}
+		const float deg2rad = 3.1415926535897932384626433832795f / 180.0f;
+		float c = cosf(m_rot * deg2rad);
+		float s = sinf(m_rot * deg2rad);
+		float R[16] = {
+			c, s, 0, 0,
+			-s, c, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		};
 
 		float T[16] = {
 			1, 0, 0, 0,
@@ -364,7 +375,11 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 			0, 0, 1, 0,
 			(float)-cfg.WorldScale * pX, (float)-cfg.WorldScale * pY, (float)-cfg.WorldScale * pZ, 1,
 		};
-		_Mul(V, T, tmpV);
+//		_Mul(V, T, tmpV);
+		float TV[16];
+		_Mul(TV, T, tmpV);
+		_Mul(V, TV, R);
+		//_Mul(V, T, tmpV);
 	}
 
 	// prepare next eye framebuffer
