@@ -59,6 +59,7 @@ struct Ccfg {
 	int moveEnabled;
 	DWORD key_FreeCamSwitch;
 	DWORD key_rotLeft, key_rotRight;
+	double rot_speed;
 };
 
 extern Ccfg cfg;
@@ -112,6 +113,7 @@ public:
 	{ 
 		m_bDoCustomHomeReset = true; 
 		m_movePos[0] = m_movePos[1] = m_movePos[2] = 0;
+		m_rot = 0;
 	}
 
 
@@ -122,7 +124,7 @@ public:
 	void SetQuality(int quality) { m_NextQuality = (EQuality)quality; }
 
 	void SetShowControllers(bool v) { m_ShowControllers = v; }
-	void Move(float *v, float speed);
+	void Move(float *v, float speed, float rotSpeed);
 	void MoveCombine()
 	{
 		cfg.CamX += m_movePos[0];

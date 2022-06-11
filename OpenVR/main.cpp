@@ -25,6 +25,7 @@
 //
 
 #include "stdafx.h"
+#include "scriptCommands.h"
 
 void BAM_msg(const char *fmt, ...);
 
@@ -46,10 +47,10 @@ const char *showViveControllersTxt[] = { "Hide", "Show w/BAM menu", "Show Allway
 
 // pointers to BAM table cfg data
 double *pCfgY, *pCfgZ, *pCfgAngle;
+OpenVrCOM* sc = nullptr;
 
 void OnLoad()
 {
-	BAM::MessageBox("ovr");
 #ifdef _DEBUG
 	//	BAM::MessageBox("Now attache debuger to Future Pinball.exe\n[menu: DEBUG -> Attache to process..]");
 #endif
@@ -91,6 +92,7 @@ void OnLoad()
 	BAM::menu_add_key(submenuid, "#-Up:"DEFPW"#+%s#r85#", &cfg.key_Up);
 	BAM::menu_add_key(submenuid, "#-Down:"DEFPW"#+%s#r85#", &cfg.key_Down);
 	BAM::menu_add_key(submenuid, "#-Free Cam On/Off:"DEFPW"#+%s#r85#", &cfg.key_FreeCamSwitch);
+	BAM::menu_add_param(submenuid, "#-Rotation speed:"DEFPW2"%.0f", &cfg.rot_speed, 1., 1, "");
 	BAM::menu_add_key(submenuid, "#-Rot-Left:"DEFPW"#+%s#r85#", &cfg.key_rotLeft);
 	BAM::menu_add_key(submenuid, "#-Rot-Right:"DEFPW"#+%s#r85#", &cfg.key_rotRight);
 	BAM::menu_add_back_button(submenuid);
@@ -100,7 +102,6 @@ void OnLoad()
 	BAM::menu_add_info(PLUGIN_ID_NUM, "#c777##-Standard options"DEFIW);
 	BAM::menu_add_TL(PLUGIN_ID_NUM);
 	BAM::menu_add_Reality(PLUGIN_ID_NUM);
-	BAM::MessageBox("ovr");
 	// Load configuration
 	BAM::LoadCfg(cfgFileName, &cfg, sizeof(cfg));
 
@@ -134,6 +135,11 @@ void OnPluginStop()
 		BAM_msg("OnPluginStop()-call delete ovr");
 		delete ovr;
 		ovr = NULL;
+	}
+	// release reasources
+	if (sc) {
+		delete sc;
+		sc = nullptr;
 	}
 	BAM_msg("OnPluginStop()-exit");
 }
@@ -350,8 +356,20 @@ void OnSwapBuffers(HDC hDC)
 
 			if (move[0] || move[1] || move[2] || move[3])
 			{
-				ovr->Move(move, static_cast<float>(cfg.move_speed));
+				ovr->Move(move, static_cast<float>(cfg.move_speed), static_cast<float>(cfg.rot_speed));
 			}
 		}
+	}
+}
+
+extern "C" {
+
+	// Set icom = xBAM.Get("icom")
+	BAMEXPORT IDispatch* BAM_GetCOM()
+	{
+		if (sc == nullptr)
+			sc = new OpenVrCOM();
+
+		return sc;
 	}
 }

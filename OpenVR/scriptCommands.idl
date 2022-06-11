@@ -1,0 +1,34 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(204DE2D6-82D8-43B7-A9B7-15CBBA4AF6E6),
+	dual
+]
+interface IOpenVrCOM : IDispatch
+{
+	[id(0), helpstring("")]
+	HRESULT Msg(
+		[in] BSTR txt);
+
+	[id(1)]
+	HRESULT RotateRoom([in] float angle);
+	//[id(1), helpstring("")]
+	//HRESULT CreateObject(
+	//	[in] BSTR txt,
+	//	[out, retval] IDispatch** retval);
+};
+
+[
+	uuid(0D4B1964-750F-444F-95E4-63F86E3BFAEA),
+	version(1.0),
+]
+library OpenVrCOMTypeLibraryFileLib
+{
+	[uuid(204DE2D6-82D8-43B7-A9B7-15CBBA4AF6E7), helpstring("OpenVrCOM VBScript Type Library")]
+	coclass OpenVrCOM
+	{
+		[default] interface IOpenVrCOM;
+	};
+};

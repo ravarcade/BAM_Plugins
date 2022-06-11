@@ -209,6 +209,8 @@
     <ClInclude Include="..\Common\BAM_inc.h" />
     <ClInclude Include="..\Common\Tools_inc.h" />
     <ClInclude Include="OpenVR_client.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="scriptCommands.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -232,6 +234,7 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenVR_client.cpp" />
+    <ClCompile Include="scriptCommands.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug-ovr-0.9.20|Win32'">Create</PrecompiledHeader>
@@ -239,6 +242,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release-ovr-1.16.8|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="scriptCommands.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OpenVR.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

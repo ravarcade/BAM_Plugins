@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "OpenVR_client.h"
 #include "Tools_inc.h"
+#include "scriptCommands.h"
 
 #define NEW_OPENVR
 #ifdef NEW_OPENVR
@@ -31,6 +32,25 @@ namespace vr {
 	const ETextureType API_OpenGL = vr::TextureType_OpenGL;
 };
 #endif
+namespace {
+	const float deg2rad = 3.1415926535897932384626433832795f / 180.0f;
+	float* rot(float rot)
+	{
+		float c = cosf(rot * deg2rad);
+		float s = sinf(rot * deg2rad);
+		static float R[16] = {
+			c, 0, -s, 0,
+			0, 1, 0, 0,
+			s, 0, c, 0,
+			0, 0, 0, 1
+		};
+		R[0] = c;
+		R[2] = -s;
+		R[8] = s;
+		R[10] = c;
+		return R;
+	}
+}
 
 // internal config
 int _DoPostPresentHandoff = 0; // don't call PostPresentHandoff after frame submit
@@ -59,7 +79,7 @@ Ccfg cfg = {
 	1.0, // World Scale
 	1.0, // PixelDensity
 	1, // ShowControllers
-	'W', 'S', 'A', 'D', 'R', 'F', 200.0, 0, 0,
+	'W', 'S', 'A', 'D', 'R', 'F', 200.0, 0, 0, 'U', 'I', 90.0f
 };
 
 const double FPGround = -950.0;
@@ -274,14 +294,83 @@ bool COpenVR_client::Init(EQuality quality)
 	return ret;
 }
 
-void COpenVR_client::Move(float *v, float speed)
+void COpenVR_client::Move(float *v, float speed, float rotSpeed)
 {
 	m_move[0] = v[0];
 	m_move[1] = v[1];
 	m_move[2] = v[2];
 	m_move[3] = v[3];
 	m_moveSpeed = speed;
+	m_rotSpeed = rotSpeed;
 }
+
+struct Scale
+{
+	Scale(float s = 1000) : s{ s } {}
+	float s = 1000.0;
+};
+
+class MatMix
+{
+public:
+	MatMix(const float*m)
+	{
+		memcpy_s(V, sizeof(V), m, sizeof(V));
+	}
+
+	MatMix() {
+		memset(V, 0, sizeof(V));
+		V[0] = V[5] = V[10] = V[15] = 1.0f;
+	}
+
+	MatMix& operator | (const float* m)
+	{
+		float tmp[16];
+		memcpy_s(tmp, sizeof(tmp), V, sizeof(V));
+		mul(V, m, tmp);
+		return *this;
+	}
+
+	MatMix& operator | (const Scale &scale)
+	{
+		V[12] *= scale.s;
+		V[13] *= scale.s;
+		V[14] *= scale.s;
+		return *this;
+	}
+
+	MatMix& operator >> (float* &out)
+	{
+		memcpy_s(out, sizeof(V), V, sizeof(V));
+		return *this;
+	}
+
+	float V[16];
+
+private:
+	void mul(float* O, const float* A, const float* B)
+	{
+		O[0] = A[0] * B[0] + A[1] * B[4] + A[2] * B[8] + A[3] * B[12];
+		O[1] = A[0] * B[1] + A[1] * B[5] + A[2] * B[9] + A[3] * B[13];
+		O[2] = A[0] * B[2] + A[1] * B[6] + A[2] * B[10] + A[3] * B[14];
+		O[3] = A[0] * B[3] + A[1] * B[7] + A[2] * B[11] + A[3] * B[15];
+
+		O[4] = A[4] * B[0] + A[5] * B[4] + A[6] * B[8] + A[7] * B[12];
+		O[5] = A[4] * B[1] + A[5] * B[5] + A[6] * B[9] + A[7] * B[13];
+		O[6] = A[4] * B[2] + A[5] * B[6] + A[6] * B[10] + A[7] * B[14];
+		O[7] = A[4] * B[3] + A[5] * B[7] + A[6] * B[11] + A[7] * B[15];
+
+		O[8] = A[8] * B[0] + A[9] * B[4] + A[10] * B[8] + A[11] * B[12];
+		O[9] = A[8] * B[1] + A[9] * B[5] + A[10] * B[9] + A[11] * B[13];
+		O[10] = A[8] * B[2] + A[9] * B[6] + A[10] * B[10] + A[11] * B[14];
+		O[11] = A[8] * B[3] + A[9] * B[7] + A[10] * B[11] + A[11] * B[15];
+
+		O[12] = A[12] * B[0] + A[13] * B[4] + A[14] * B[8] + A[15] * B[12];
+		O[13] = A[12] * B[1] + A[13] * B[5] + A[14] * B[9] + A[15] * B[13];
+		O[14] = A[12] * B[2] + A[13] * B[6] + A[14] * B[10] + A[15] * B[14];
+		O[15] = A[12] * B[3] + A[13] * B[7] + A[14] * B[11] + A[15] * B[15];
+	}
+};
 
 /// <summary>
 /// Updates the View and Projection Matrix based on tracking data
@@ -330,10 +419,12 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 				_Mul(m_mPose, m_mPoseHome, tmpPose);
 
 				float step = fFrameDuration * m_moveSpeed;
-				for (uint32_t i = 0; i < 3; ++i) {
-					m_movePos[i] += step * (m_move[0] * m_mPose[4*i + 0] + m_move[1] * m_mPose[4*i + 1] + m_move[2] * m_mPose[4*i + 2]);
-				}
 				m_rot += m_move[3] * fFrameDuration * m_rotSpeed;
+				float mP[16];
+				_Mul(mP, rot(m_rot), m_mPose);
+				for (uint32_t i = 0; i < 3; ++i) {
+					m_movePos[i] += step * (m_move[0] * mP[4*i + 0] + m_move[1] * mP[4*i + 1] + m_move[2] * mP[4*i + 2]);
+				}
 				m_move[0] = m_move[1] = m_move[2] = m_move[3] = 0;
 			}
 		}
@@ -343,14 +434,15 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 		memcpy_s(P, sizeof(float[16]), m_mProjection[eye], sizeof(float[16]));
 
 		// V = eyePoseLeft * Pose
-		float tmpV[16];
-		_Mul(tmpV, m_mPose, m_mEyePosition[eye]);
+		MatMix mm(m_mEyePosition[eye]);
+		//float tmpV[16];
+		//_Mul(tmpV, m_mPose, m_mEyePosition[eye]);
 
 		// BAM uses milimeter, OVR maters, so i simply scale position. Not obvious, but works.
 		float scale = 1000.0;
-		tmpV[12] *= scale;
-		tmpV[13] *= scale;
-		tmpV[14] *= scale;
+		//tmpV[12] *= scale;
+		//tmpV[13] *= scale;
+		//tmpV[14] *= scale;
 
 		float pX = (float)cfg.CamX + m_movePos[0];
 		float pY = (float)cfg.CamY + m_movePos[1];
@@ -359,15 +451,6 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 		{
 			pY = (float)(FPGround);
 		}
-		const float deg2rad = 3.1415926535897932384626433832795f / 180.0f;
-		float c = cosf(m_rot * deg2rad);
-		float s = sinf(m_rot * deg2rad);
-		float R[16] = {
-			c, s, 0, 0,
-			-s, c, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1
-		};
 
 		float T[16] = {
 			1, 0, 0, 0,
@@ -376,9 +459,15 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 			(float)-cfg.WorldScale * pX, (float)-cfg.WorldScale * pY, (float)-cfg.WorldScale * pZ, 1,
 		};
 //		_Mul(V, T, tmpV);
-		float TV[16];
-		_Mul(TV, T, tmpV);
-		_Mul(V, TV, R);
+/*		float TV[16];
+		float TV2[16];
+
+		_Mul(TV, rot(m_rot), tmpV);
+
+		_Mul(TV2, T, TV);
+*/
+		(mm | m_mPose | Scale(1000.0f) | rot(m_rot) | T | sc->GetRotationRoom()) >> V;
+
 		//_Mul(V, T, tmpV);
 	}
 
