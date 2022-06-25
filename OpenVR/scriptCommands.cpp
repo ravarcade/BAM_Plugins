@@ -54,7 +54,30 @@ HRESULT STDMETHODCALLTYPE OpenVrCOM::RotateRoom(/* [in] */ float angle)
 	return S_OK;
 }
 
+HRESULT STDMETHODCALLTYPE OpenVrCOM::CenterRoom(/* [in] */ float x, /* [in] */ float y, /* [in] */ float z)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
+
+	return S_OK;
+}
+
 float* OpenVrCOM::GetRotationRoom()
 {
 	return rot(angle);
+}
+
+float* OpenVrCOM::GetCenterRoom(float s)
+{
+	static float T[16] = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+	};
+	T[12] = -x * s;
+	T[13] = -y * s;
+	T[14] = -z * s;
+	return T;
 }

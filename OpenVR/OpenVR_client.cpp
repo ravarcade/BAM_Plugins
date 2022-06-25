@@ -466,7 +466,7 @@ void COpenVR_client::UpdateVP(float *V, float *P, int eye)
 
 		_Mul(TV2, T, TV);
 */
-		(mm | m_mPose | Scale(1000.0f) | rot(m_rot) | T | sc->GetRotationRoom()) >> V;
+		(mm | m_mPose | Scale(1000.0f) | rot(m_rot) | T | sc->GetRotationRoom() | sc->GetCenterRoom(cfg.WorldScale)) >> V;
 
 		//_Mul(V, T, tmpV);
 	}

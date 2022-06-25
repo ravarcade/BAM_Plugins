@@ -98,10 +98,15 @@ public:
 
 	HRESULT STDMETHODCALLTYPE Msg(/* [in] */ BSTR txt);
 	HRESULT STDMETHODCALLTYPE RotateRoom(/* [in] */ float angle);
+	HRESULT STDMETHODCALLTYPE CenterRoom(/* [in] */ float x, /* [in] */ float y, /* [in] */ float z);
 	float* GetRotationRoom();
+	float* GetCenterRoom(float s = 1.0f);
 
 private:
 	float angle = 0.0f;
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
 };
 
 extern OpenVrCOM* sc;
